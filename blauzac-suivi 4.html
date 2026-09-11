@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Bâtiment Général à Blauzac — Suivi</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel2:#1e222b;
+    --border:#2a2f3a;
+    --text:#eef0f4;
+    --muted:#8a90a0;
+    --accent:#4fa3ff;
+    --green:#3ecf8e;
+    --amber:#e8b13f;
+    --red:#e8615f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:20px 14px 60px;
+  }
+  h1{
+    font-size:22px;
+    margin:0 0 2px;
+    letter-spacing:-0.02em;
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:22px;
+  }
+  .summary{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:24px;
+  }
+  .summary .card{
+    flex:1;
+    min-width:140px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .summary .card .label{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .summary .card .value{
+    font-size:19px;
+    font-weight:600;
+    margin-top:3px;
+  }
+  .project{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:18px;
+  }
+  .project-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:4px;
+  }
+  .project-head .name{
+    font-size:17px;
+    font-weight:600;
+  }
+  .devis-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .devis-row input{
+    width:130px;
+  }
+  input[type=text], input[type=number]{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:6px 8px;
+    font-size:14px;
+    font-family:inherit;
+  }
+  input[type=number]{
+    text-align:right;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  thead th{
+    text-align:left;
+    color:var(--muted);
+    font-weight:500;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding:0 6px 8px;
+    border-bottom:1px solid var(--border);
+  }
+  thead th.num{text-align:right;}
+  thead th.chk{text-align:center;}
+  tbody td{
+    padding:7px 6px;
+    border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody td.num{text-align:right;}
+  tbody td.chk{text-align:center;}
+  .paid input[type=text], .paid input[type=number]{
+    opacity:.55;
+    text-decoration:line-through;
+  }
+  .fac-label{width:100%; min-width:120px;}
+  .fac-amount{width:95px;}
+  .checkbox{
+    width:20px;height:20px;
+    accent-color:var(--green);
+  }
+  .del-btn{
+    background:none;
+    border:none;
+    color:var(--red);
+    font-size:16px;
+    cursor:pointer;
+    padding:2px 6px;
+    line-height:1;
+  }
+  .add-btn{
+    margin-top:10px;
+    background:var(--panel2);
+    border:1px dashed var(--border);
+    color:var(--accent);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:13px;
+    cursor:pointer;
+    width:100%;
+  }
+  .foot-row{
+    display:flex;
+    justify-content:space-between;
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+    font-size:13px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .foot-item .label{color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.04em;}
+  .foot-item .value{font-size:16px; font-weight:600; margin-top:2px;}
+  .reste{color:var(--amber);}
+  .reste.zero{color:var(--green);}
+  .hint{
+    color:var(--muted);
+    font-size:11.5px;
+    margin-top:18px;
+    line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<h1 id="title" contenteditable="true" data-field="title">Le Bâtiment Général à Blauzac</h1>
+<div class="subtitle">Suivi devis / factures d'acompte — appuyez sur une valeur pour la modifier, cochez une facture réglée</div>
+<div class="subtitle" id="cloud-status" style="margin-top:-16px;"></div>
+
+<div class="summary">
+  <div class="card">
+    <div class="label">Total devisé</div>
+    <div class="value" id="sum-devis">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Total facturé</div>
+    <div class="value" id="sum-facture">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Reste à payer</div>
+    <div class="value reste" id="sum-reste">—</div>
+  </div>
+</div>
+
+<div id="projects"></div>
+
+<div class="hint">
+  Le « reste à payer » d'un devis = montant du devis − somme des factures cochées comme réglées. Toutes les valeurs (titre, devis, libellés de factures, montants) sont modifiables directement. Utilisez « + ajouter une facture » pour insérer une nouvelle ligne.
+</div>
+
+<script>
+// ==== CONFIGURATION — à remplir après le déploiement du script Google Apps Script ====
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZB_FORwQr-vAmAwreXxJbjjZieL2zdkrp91fAZ4PpE9je_1pv25YUY-NrtTLIHw9npQ/exec";
+const DOC_ID = "1"; // "1" pour ce fichier (Blauzac 1) — ne pas changer
+// =======================================================================================
+
+const STORAGE_KEY = "blauzac1_suivi_v1";
+const defaultTitle = "Le Bâtiment Général à Blauzac";
+
+const defaultData = [
+  {
+    id: "maison",
+    name: "Travaux grande maison Blauzac",
+    devis: 1027256,
+    factures: [
+      { label: "FAC-2026/06-0120 — 25/06/2026", amount: 40000, paid: true },
+      { label: "FAC-2026/05-0115 — 07/05/2026", amount: 70000, paid: true },
+      { label: "FAC-2026/02-0111 — 04/02/2026", amount: 150000, paid: true },
+      { label: "FAC-2025/11-0110 — 13/11/2025", amount: 50000, paid: true },
+      { label: "FAC-2025/10-0109 — 29/10/2025", amount: 100000, paid: true },
+      { label: "FAC-2025/07-0104 — 17/07/2025", amount: 100000, paid: true },
+      { label: "FAC-2025/05-0097 — 16/05/2025", amount: 100000, paid: true },
+      { label: "FAC-2025/04-0093 — 01/04/2025", amount: 100000, paid: true },
+      { label: "FAC-2025/02-0092 — 11/02/2025", amount: 90000, paid: true },
+      { label: "FAC-2025/01-0091 — 23/01/2025", amount: 149999, paid: true }
+    ]
+  },
+  {
+    id: "piscine",
+    name: "Réfection de la piscine Blauzac",
+    devis: 378714,
+    factures: [
+      { label: "FAC-2026/06-0121 — 25/06/2026", amount: 60000, paid: true },
+      { label: "FAC-2026/05-0116 — 07/05/2026", amount: 70000, paid: true },
+      { label: "FAC-2026/03-0112 — 23/03/2026 (corrigée)", amount: 107346, paid: true }
+    ]
+  }
+];
+
+let currentTitle = defaultTitle;
+let data = JSON.parse(JSON.stringify(defaultData));
+
+function cloudConfigured(){
+  return APPS_SCRIPT_URL && !APPS_SCRIPT_URL.includes("COLLEZ_ICI");
+}
+function setStatus(msg, isError){
+  const el = document.getElementById('cloud-status');
+  el.textContent = msg;
+  el.style.color = isError ? "#e8615f" : "#3ecf8e";
+}
+
+async function loadFromCloud(){
+  if(!cloudConfigured()) return null;
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 6000);
+    const res = await fetch(APPS_SCRIPT_URL + "?doc=" + DOC_ID, { signal: controller.signal });
+    clearTimeout(timeout);
+    const text = await res.text();
+    if(!text) return null;
+    return JSON.parse(text);
+  }catch(e){ return null; }
+}
+async function saveToCloud(){
+  if(!cloudConfigured()){ setStatus("Non connecté à Google Sheets — enregistré uniquement dans ce navigateur.", true); return; }
+  try{
+    await fetch(APPS_SCRIPT_URL + "?doc=" + DOC_ID, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ title: currentTitle, projects: data })
+    });
+    setStatus("Enregistré sur Google Sheets ✓");
+  }catch(e){
+    setStatus("Erreur de connexion — enregistré uniquement dans ce navigateur.", true);
+  }
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.projects)) return parsed;
+    }
+  }catch(e){}
+  return null;
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ title: currentTitle, projects: data })); }catch(e){}
+  saveToCloud();
+}
+
+function eur(n){
+  n = isNaN(n) ? 0 : n;
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:0, maximumFractionDigits:0}) + " €";
+}
+
+function render(){
+  const container = document.getElementById('projects');
+  container.innerHTML = '';
+  let grandDevis = 0, grandFacture = 0, grandReste = 0;
+
+  data.forEach(project => {
+    const totalFacture = project.factures.reduce((s,f)=>s+ (Number(f.amount)||0), 0);
+    const paidTotal = project.factures.filter(f=>f.paid).reduce((s,f)=>s+(Number(f.amount)||0),0);
+    const reste = (Number(project.devis)||0) - paidTotal;
+
+    grandDevis += Number(project.devis)||0;
+    grandFacture += totalFacture;
+    grandReste += reste;
+
+    const div = document.createElement('div');
+    div.className = 'project';
+    div.innerHTML = `
+      <div class="project-head">
+        <div class="name" contenteditable="true" data-field="name" data-project="${project.id}">${project.name}</div>
+      </div>
+      <div class="devis-row">
+        Devis : <input type="number" value="${project.devis}" data-field="devis" data-project="${project.id}"> €
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Facture</th>
+            <th class="num">Montant</th>
+            <th class="chk">Réglée</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${project.factures.map((f,i)=>`
+            <tr class="${f.paid ? 'paid':''}">
+              <td><input type="text" class="fac-label" value="${f.label}" data-project="${project.id}" data-idx="${i}" data-field="label"></td>
+              <td class="num"><input type="number" class="fac-amount" value="${f.amount}" data-project="${project.id}" data-idx="${i}" data-field="amount"></td>
+              <td class="chk"><input type="checkbox" class="checkbox" ${f.paid?'checked':''} data-project="${project.id}" data-idx="${i}" data-field="paid"></td>
+              <td><button class="del-btn" data-project="${project.id}" data-idx="${i}" data-action="del">✕</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <button class="add-btn" data-project="${project.id}" data-action="add">+ ajouter une facture</button>
+      <div class="foot-row">
+        <div class="foot-item">
+          <div class="label">Total facturé</div>
+          <div class="value">${eur(totalFacture)}</div>
+        </div>
+        <div class="foot-item">
+          <div class="label">Réglé</div>
+          <div class="value">${eur(paidTotal)}</div>
+        </div>
+        <div class="foot-item">
+          <div class="label">Reste à payer</div>
+          <div class="value reste ${reste<=0?'zero':''}">${eur(reste)}</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('sum-devis').textContent = eur(grandDevis);
+  document.getElementById('sum-facture').textContent = eur(grandFacture);
+  const resteEl = document.getElementById('sum-reste');
+  resteEl.textContent = eur(grandReste);
+  resteEl.classList.toggle('zero', grandReste<=0);
+
+  attachEvents();
+}
+
+function attachEvents(){
+  document.querySelectorAll('#projects [data-field]').forEach(el=>{
+    const evt = el.isContentEditable ? 'blur' : 'change';
+    el.addEventListener(evt, onFieldChange);
+    if(!el.isContentEditable && el.type !== 'checkbox'){
+      el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') el.blur(); });
+    }
+  });
+  document.querySelectorAll('[data-action="del"]').forEach(el=>{
+    el.addEventListener('click', onDelete);
+  });
+  document.querySelectorAll('[data-action="add"]').forEach(el=>{
+    el.addEventListener('click', onAdd);
+  });
+}
+
+function getProject(id){
+  return data.find(p=>p.id===id);
+}
+
+function onFieldChange(e){
+  const el = e.target;
+  const field = el.dataset.field;
+
+  if(field === 'title'){ currentTitle = el.textContent; saveState(); return; }
+
+  const projectId = el.dataset.project;
+  const project = getProject(projectId);
+  if(!project) return;
+
+  if(field === 'devis'){
+    project.devis = Number(el.value);
+    render();
+    saveState();
+    return;
+  }
+  if(field === 'name'){
+    project.name = el.textContent;
+    render();
+    saveState();
+    return;
+  }
+  const idx = Number(el.dataset.idx);
+  if(field === 'label'){
+    project.factures[idx].label = el.value;
+  } else if(field === 'amount'){
+    project.factures[idx].amount = Number(el.value);
+  } else if(field === 'paid'){
+    project.factures[idx].paid = el.checked;
+  }
+  render();
+  saveState();
+}
+
+function onDelete(e){
+  const projectId = e.target.dataset.project;
+  const idx = Number(e.target.dataset.idx);
+  const project = getProject(projectId);
+  project.factures.splice(idx,1);
+  render();
+  saveState();
+}
+
+function onAdd(e){
+  const projectId = e.target.dataset.project;
+  const project = getProject(projectId);
+  project.factures.push({label:"Nouvelle facture", amount:0, paid:false});
+  render();
+  saveState();
+}
+
+document.getElementById('title').addEventListener('blur', onFieldChange);
+
+async function init(){
+  setStatus(cloudConfigured() ? "Connexion à Google Sheets…" : "Non connecté à Google Sheets — enregistrement local uniquement dans ce navigateur.", !cloudConfigured());
+  const cloud = await loadFromCloud();
+  const state = cloud || loadLocal();
+  if(state){
+    currentTitle = state.title || defaultTitle;
+    data = state.projects || JSON.parse(JSON.stringify(defaultData));
+  }
+  document.getElementById('title').textContent = currentTitle;
+  if(cloudConfigured()) setStatus("Connecté à Google Sheets ✓");
+  render();
+}
+init();
+</script>
+</body>
+</html>
