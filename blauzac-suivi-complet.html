@@ -133,20 +133,22 @@
     table thead{display:none;}
     table, tbody{display:block; width:100%;}
     tbody tr{
-      display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px;
+      display:flex; flex-wrap:wrap; align-items:center; gap:4px 5px;
       border:1px solid var(--border); border-radius:10px;
-      padding:10px; margin-bottom:8px; background:var(--panel2);
+      padding:7px; margin-bottom:6px; background:var(--panel2);
     }
     tbody tr.row-hidden{display:none;}
     tbody td{border-bottom:none; padding:0; width:auto;}
-    tbody td:nth-child(1){flex:1 1 100%; order:1;}
-    tbody td:nth-child(2){flex:0 1 auto; order:2;}
-    tbody td:nth-child(3){flex:1 1 auto; order:3; text-align:right;}
-    tbody td:nth-child(4){order:4;}
-    tbody td:nth-child(5){order:5; margin-left:auto;}
-    .fac-ref, .fac-date{width:100%;}
-    .fac-date{text-align:left; min-width:0;}
-    .fac-amount{width:100px;}
+    tbody td:nth-child(1){flex:0 0 38px; order:1;}
+    tbody td:nth-child(2){flex:0 0 66px; order:2;}
+    tbody td:nth-child(3){flex:0 0 66px; order:3; text-align:right;}
+    tbody td:nth-child(4){flex:0 0 auto; order:4;}
+    tbody td:nth-child(5){flex:0 0 auto; order:5; margin-left:auto;}
+    .fac-ref{width:100%; font-size:11px; padding:4px 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .fac-date{width:100%; text-align:left; font-size:11px; padding:4px 5px;}
+    .fac-amount{width:100%; font-size:11.5px; padding:4px 5px;}
+    .checkbox{width:16px; height:16px;}
+    .del-btn{font-size:12px; padding:2px 3px;}
   }
 </style>
 </head>
@@ -185,59 +187,59 @@ const STORAGE_KEY = "blauzac_suivi_v1";
 
 const defaultData = [
   { id:"maison", name:"Travaux grande maison Blauzac", devis:1027256, note:null, factures:[
-    {ref:"FAC-2026/06-0120", date:"25/06/2026", amount:40000, paid:true},
-    {ref:"FAC-2026/05-0115", date:"07/05/2026", amount:70000, paid:true},
-    {ref:"FAC-2026/02-0111", date:"04/02/2026", amount:150000, paid:true},
-    {ref:"FAC-2025/11-0110", date:"13/11/2025", amount:50000, paid:true},
-    {ref:"FAC-2025/10-0109", date:"29/10/2025", amount:100000, paid:true},
-    {ref:"FAC-2025/07-0104", date:"17/07/2025", amount:100000, paid:true},
-    {ref:"FAC-2025/05-0097", date:"16/05/2025", amount:100000, paid:true},
-    {ref:"FAC-2025/04-0093", date:"01/04/2025", amount:100000, paid:true},
-    {ref:"FAC-2025/02-0092", date:"11/02/2025", amount:90000, paid:true},
-    {ref:"FAC-2025/01-0091", date:"23/01/2025", amount:149999, paid:true}
+    {ref:"2026/06-0120", date:"25/06/2026", amount:40000, paid:true},
+    {ref:"2026/05-0115", date:"07/05/2026", amount:70000, paid:true},
+    {ref:"2026/02-0111", date:"04/02/2026", amount:150000, paid:true},
+    {ref:"2025/11-0110", date:"13/11/2025", amount:50000, paid:true},
+    {ref:"2025/10-0109", date:"29/10/2025", amount:100000, paid:true},
+    {ref:"2025/07-0104", date:"17/07/2025", amount:100000, paid:true},
+    {ref:"2025/05-0097", date:"16/05/2025", amount:100000, paid:true},
+    {ref:"2025/04-0093", date:"01/04/2025", amount:100000, paid:true},
+    {ref:"2025/02-0092", date:"11/02/2025", amount:90000, paid:true},
+    {ref:"2025/01-0091", date:"23/01/2025", amount:149999, paid:true}
   ]},
   { id:"piscine", name:"Réfection de la piscine Blauzac", devis:378714,
     note:"Montant de la facture FAC-2026/03-0112 corrigé à 107 346 € (au lieu de 136 615 € affichés dans Tolteck).",
     factures:[
-    {ref:"FAC-2026/06-0121", date:"25/06/2026", amount:60000, paid:true},
-    {ref:"FAC-2026/05-0116", date:"07/05/2026", amount:70000, paid:true},
-    {ref:"FAC-2026/03-0112 (corrigée)", date:"23/03/2026", amount:107346, paid:true}
+    {ref:"2026/06-0121", date:"25/06/2026", amount:60000, paid:true},
+    {ref:"2026/05-0116", date:"07/05/2026", amount:70000, paid:true},
+    {ref:"2026/03-0112 (corrigée)", date:"23/03/2026", amount:107346, paid:true}
   ]},
   { id:"elecmaison", name:"Électricité générale maison", devis:14818, note:"Devis DEV-2025/06-0125 du 02/06/2025.", factures:[
-    {ref:"FAC-2026/03-0114", date:"25/03/2026", amount:14818, paid:true}
+    {ref:"2026/03-0114", date:"25/03/2026", amount:14818, paid:true}
   ]},
   { id:"elecpetite", name:"Électricité générale petite maison", devis:5962, note:"Devis DEV-2025/12-0140 du 05/12/2025.", factures:[
-    {ref:"FAC-2026/03-0113", date:"25/03/2026", amount:5962, paid:true}
+    {ref:"2026/03-0113", date:"25/03/2026", amount:5962, paid:true}
   ]},
   { id:"devispetite", name:"Devis petite maison", devis:339922,
     note:"Devis DEV-2024/04-0093 du 06/04/2024 (nommé « Devis Blauzac » dans Tolteck).", factures:[
-    {ref:"FAC-2024/12-0089", date:"18/12/2024", amount:62449, paid:true},
-    {ref:"FAC-2024/11-0085", date:"29/11/2024", amount:35000, paid:true},
-    {ref:"FAC-2024/11-0080", date:"09/11/2024", amount:30000, paid:true},
-    {ref:"FAC-2024/09-0077", date:"16/09/2024", amount:50000, paid:true},
-    {ref:"FAC-2024/07-0076", date:"24/07/2024", amount:81186, paid:true},
-    {ref:"FAC-2024/05-0072", date:"22/05/2024", amount:81285, paid:true}
+    {ref:"2024/12-0089", date:"18/12/2024", amount:62449, paid:true},
+    {ref:"2024/11-0085", date:"29/11/2024", amount:35000, paid:true},
+    {ref:"2024/11-0080", date:"09/11/2024", amount:30000, paid:true},
+    {ref:"2024/09-0077", date:"16/09/2024", amount:50000, paid:true},
+    {ref:"2024/07-0076", date:"24/07/2024", amount:81186, paid:true},
+    {ref:"2024/05-0072", date:"22/05/2024", amount:81285, paid:true}
   ]},
   { id:"demolrdj", name:"Démolition rez-de-jardin", devis:24311,
     note:"Montant du devis fourni par l'utilisateur. Un 3e document (« +1 document ») existe dans Tolteck mais n'est pas repris ici.", factures:[
-    {ref:"FAC-2024/12-0088", date:"18/12/2024", amount:12155, paid:true},
-    {ref:"FAC-2024/12-0087", date:"07/12/2024", amount:12155, paid:true}
+    {ref:"2024/12-0088", date:"18/12/2024", amount:12155, paid:true},
+    {ref:"2024/12-0087", date:"07/12/2024", amount:12155, paid:true}
   ]},
   { id:"supplplomb", name:"Supplément plomberie chaufferie", devis:0,
     note:"Total devisé affiché à 0 € dans Tolteck.", factures:[
-    {ref:"FAC-2024/11-0086", date:"28/11/2024", amount:2046, paid:true}
+    {ref:"2024/11-0086", date:"28/11/2024", amount:2046, paid:true}
   ]},
   { id:"plombmaison", name:"Plomberie général grande maison", devis:12267, note:"Devis DEV-2024/11-0113 du 11/11/2024.", factures:[
-    {ref:"FAC-2024/11-0083", date:"14/11/2024", amount:12267, paid:true}
+    {ref:"2024/11-0083", date:"14/11/2024", amount:12267, paid:true}
   ]},
   { id:"demolrdjgm1", name:"Démolition rez-de-jardin grande maison (phase 1)", devis:15773,
     note:"Devis DEV-2024/03-0086 du 04/03/2024 — 1ère phase. Montant du devis mis à jour par l'utilisateur.", factures:[
-    {ref:"FAC-2024/03-0068", date:"12/03/2024", amount:11180, paid:true},
-    {ref:"FAC-2024/03-0066", date:"08/03/2024", amount:4593, paid:true}
+    {ref:"2024/03-0068", date:"12/03/2024", amount:11180, paid:true},
+    {ref:"2024/03-0066", date:"08/03/2024", amount:4593, paid:true}
   ]},
   { id:"demolpetite", name:"Démolition petite maison", devis:28286, note:"Devis DEV-2024/03-0087 du 05/03/2024. Montant du devis mis à jour par l'utilisateur.", factures:[
-    {ref:"FAC-2024/03-0069", date:"12/03/2024", amount:20564, paid:true},
-    {ref:"FAC-2024/03-0067", date:"08/03/2024", amount:7722, paid:true}
+    {ref:"2024/03-0069", date:"12/03/2024", amount:20564, paid:true},
+    {ref:"2024/03-0067", date:"08/03/2024", amount:7722, paid:true}
   ]}
 ];
 
