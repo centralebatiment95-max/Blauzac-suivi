@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Bâtiment Général à Blauzac — Suivi complet</title>
+<style>
+  :root{
+    --bg:#000000;
+    --panel:#121212;
+    --panel2:#1a1a1a;
+    --border:#2a2a2a;
+    --text:#f2f2f2;
+    --muted:#8a8f9a;
+    --accent:#4fa3ff;
+    --green:#3ecf8e;
+    --amber:#e8b13f;
+    --red:#e8615f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:20px 14px 60px;
+  }
+  h1{font-size:21px; margin:0 0 2px; letter-spacing:-0.02em;}
+  .subtitle{color:var(--muted); font-size:12.5px; margin-bottom:16px;}
+
+  .filterbar{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:18px;
+  }
+  .filterbar .flabel{
+    font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;
+  }
+  .years{display:flex; gap:8px; flex-wrap:wrap;}
+  .year-chip{
+    display:flex; align-items:center; gap:5px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:5px 12px;
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .year-chip input{accent-color:var(--accent);}
+  .year-chip.all{border-color:var(--accent); color:var(--accent);}
+
+  .summary{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  .summary .card{
+    flex:1; min-width:130px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+  }
+  .summary .card .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+  .summary .card .value{font-size:18px; font-weight:600; margin-top:3px;}
+
+  .project{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+  .project.empty-in-filter{opacity:.35;}
+  .project-head{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:4px;}
+  .project-head .name{font-size:16px; font-weight:600;}
+  .devis-row{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; margin-bottom:4px; flex-wrap:wrap;}
+  .devis-row input{width:150px; font-size:14px;}
+  .note{
+    font-size:11px; color:#a1852f; background:#2a2210; border:1px solid #443a15;
+    border-radius:6px; padding:6px 8px; margin-bottom:10px; line-height:1.4;
+  }
+  input[type=text], input[type=number]{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:6px 8px;
+    font-size:13.5px;
+    font-family:inherit;
+  }
+  input[type=number]{text-align:right;}
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px;}
+  thead th{
+    text-align:left; color:var(--muted); font-weight:500; font-size:10.5px;
+    text-transform:uppercase; letter-spacing:.04em; padding:0 6px 8px;
+    border-bottom:1px solid var(--border);
+  }
+  thead th.num{text-align:right;}
+  thead th.chk, thead th.year{text-align:center;}
+  tbody td{padding:7px 6px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody td.num{text-align:right;}
+  tbody td.chk, tbody td.year{text-align:center; color:var(--muted); font-size:12px;}
+  .paid input[type=text], .paid input[type=number]{opacity:.5; text-decoration:line-through;}
+  .fac-ref{width:100%; min-width:130px;}
+  .fac-date{width:90px; text-align:center;}
+  .fac-amount{width:120px; font-size:14px;}
+  .checkbox{width:19px; height:19px; accent-color:var(--green);}
+  .del-btn{background:none; border:none; color:var(--red); font-size:15px; cursor:pointer; padding:2px 6px; line-height:1;}
+  .add-btn{
+    margin-top:10px; background:var(--panel2); border:1px dashed var(--border); color:var(--accent);
+    border-radius:8px; padding:8px 10px; font-size:12.5px; cursor:pointer; width:100%;
+  }
+  .foot-row{
+    display:flex; justify-content:space-between; margin-top:12px; padding-top:12px;
+    border-top:1px solid var(--border); font-size:13px; flex-wrap:wrap; gap:8px;
+  }
+  .foot-item .label{color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;}
+  .foot-item .value{font-size:15px; font-weight:600; margin-top:2px;}
+  .reste{color:var(--amber);}
+  .reste.zero{color:var(--green);}
+  .reste.neg{color:var(--red);}
+  .hint{color:var(--muted); font-size:11px; margin-top:18px; line-height:1.5;}
+  .row-hidden{display:none;}
+</style>
+</head>
+<body>
+
+<h1 id="title" contenteditable="true" data-field="title">Le Bâtiment Général à Blauzac</h1>
+<div class="subtitle">Suivi complet des chantiers — tout est modifiable, cochez une facture réglée, filtrez par année. Vos modifications sont enregistrées automatiquement dans ce navigateur.</div>
+<div class="subtitle" id="cloud-status" style="margin-top:-16px;"></div>
+
+<div class="filterbar">
+  <div class="flabel">Filtrer par année d'intervention</div>
+  <div class="years" id="year-filters"></div>
+</div>
+
+<button class="add-btn" id="reset-btn" style="margin-bottom:18px; color:var(--red); border-color:#442222;">↺ Réinitialiser aux valeurs d'origine</button>
+
+<div class="summary">
+  <div class="card"><div class="label">Total devisé</div><div class="value" id="sum-devis">—</div></div>
+  <div class="card"><div class="label">Total facturé</div><div class="value" id="sum-facture">—</div></div>
+  <div class="card"><div class="label">Reste à payer</div><div class="value reste" id="sum-reste">—</div></div>
+</div>
+
+<div id="projects"></div>
+
+<div class="hint">
+  Le « reste à payer » d'un chantier = devis − somme des factures cochées « réglée », en tenant compte du filtre année actif. Un reste négatif signifie que le chantier a été facturé au-delà du devis initial (travaux supplémentaires). Toutes les valeurs (titre, devis, référence, date, montant) sont modifiables directement. « + ajouter une facture » insère une ligne.
+</div>
+
+<script>
+// ==== CONFIGURATION — à remplir après le déploiement du script Google Apps Script ====
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZB_FORwQr-vAmAwreXxJbjjZieL2zdkrp91fAZ4PpE9je_1pv25YUY-NrtTLIHw9npQ/exec";
+const DOC_ID = "2"; // "2" pour ce fichier (Blauzac 2) — ne pas changer
+// =======================================================================================
+
+const STORAGE_KEY = "blauzac_suivi_v1";
+
+const defaultData = [
+  { id:"maison", name:"Travaux grande maison Blauzac", devis:1027256, note:null, factures:[
+    {ref:"FAC-2026/06-0120", date:"25/06/2026", amount:40000, paid:true},
+    {ref:"FAC-2026/05-0115", date:"07/05/2026", amount:70000, paid:true},
+    {ref:"FAC-2026/02-0111", date:"04/02/2026", amount:150000, paid:true},
+    {ref:"FAC-2025/11-0110", date:"13/11/2025", amount:50000, paid:true},
+    {ref:"FAC-2025/10-0109", date:"29/10/2025", amount:100000, paid:true},
+    {ref:"FAC-2025/07-0104", date:"17/07/2025", amount:100000, paid:true},
+    {ref:"FAC-2025/05-0097", date:"16/05/2025", amount:100000, paid:true},
+    {ref:"FAC-2025/04-0093", date:"01/04/2025", amount:100000, paid:true},
+    {ref:"FAC-2025/02-0092", date:"11/02/2025", amount:90000, paid:true},
+    {ref:"FAC-2025/01-0091", date:"23/01/2025", amount:149999, paid:true}
+  ]},
+  { id:"piscine", name:"Réfection de la piscine Blauzac", devis:378714,
+    note:"Montant de la facture FAC-2026/03-0112 corrigé à 107 346 € (au lieu de 136 615 € affichés dans Tolteck).",
+    factures:[
+    {ref:"FAC-2026/06-0121", date:"25/06/2026", amount:60000, paid:true},
+    {ref:"FAC-2026/05-0116", date:"07/05/2026", amount:70000, paid:true},
+    {ref:"FAC-2026/03-0112 (corrigée)", date:"23/03/2026", amount:107346, paid:true}
+  ]},
+  { id:"elecmaison", name:"Électricité générale maison", devis:14818, note:"Devis DEV-2025/06-0125 du 02/06/2025.", factures:[
+    {ref:"FAC-2026/03-0114", date:"25/03/2026", amount:14818, paid:true}
+  ]},
+  { id:"elecpetite", name:"Électricité générale petite maison", devis:5962, note:"Devis DEV-2025/12-0140 du 05/12/2025.", factures:[
+    {ref:"FAC-2026/03-0113", date:"25/03/2026", amount:5962, paid:true}
+  ]},
+  { id:"devispetite", name:"Devis petite maison", devis:339922,
+    note:"Devis DEV-2024/04-0093 du 06/04/2024 (nommé « Devis Blauzac » dans Tolteck).", factures:[
+    {ref:"FAC-2024/12-0089", date:"18/12/2024", amount:62449, paid:true},
+    {ref:"FAC-2024/11-0085", date:"29/11/2024", amount:35000, paid:true},
+    {ref:"FAC-2024/11-0080", date:"09/11/2024", amount:30000, paid:true},
+    {ref:"FAC-2024/09-0077", date:"16/09/2024", amount:50000, paid:true},
+    {ref:"FAC-2024/07-0076", date:"24/07/2024", amount:81186, paid:true},
+    {ref:"FAC-2024/05-0072", date:"22/05/2024", amount:81285, paid:true}
+  ]},
+  { id:"demolrdj", name:"Démolition rez-de-jardin", devis:24311,
+    note:"Montant du devis fourni par l'utilisateur. Un 3e document (« +1 document ») existe dans Tolteck mais n'est pas repris ici.", factures:[
+    {ref:"FAC-2024/12-0088", date:"18/12/2024", amount:12155, paid:true},
+    {ref:"FAC-2024/12-0087", date:"07/12/2024", amount:12155, paid:true}
+  ]},
+  { id:"supplplomb", name:"Supplément plomberie chaufferie", devis:0,
+    note:"Total devisé affiché à 0 € dans Tolteck.", factures:[
+    {ref:"FAC-2024/11-0086", date:"28/11/2024", amount:2046, paid:true}
+  ]},
+  { id:"plombmaison", name:"Plomberie général grande maison", devis:12267, note:"Devis DEV-2024/11-0113 du 11/11/2024.", factures:[
+    {ref:"FAC-2024/11-0083", date:"14/11/2024", amount:12267, paid:true}
+  ]},
+  { id:"demolrdjgm1", name:"Démolition rez-de-jardin grande maison (phase 1)", devis:15773,
+    note:"Devis DEV-2024/03-0086 du 04/03/2024 — 1ère phase. Montant du devis mis à jour par l'utilisateur.", factures:[
+    {ref:"FAC-2024/03-0068", date:"12/03/2024", amount:11180, paid:true},
+    {ref:"FAC-2024/03-0066", date:"08/03/2024", amount:4593, paid:true}
+  ]},
+  { id:"demolpetite", name:"Démolition petite maison", devis:28286, note:"Devis DEV-2024/03-0087 du 05/03/2024. Montant du devis mis à jour par l'utilisateur.", factures:[
+    {ref:"FAC-2024/03-0069", date:"12/03/2024", amount:20564, paid:true},
+    {ref:"FAC-2024/03-0067", date:"08/03/2024", amount:7722, paid:true}
+  ]}
+];
+
+const defaultTitle = "Le Bâtiment Général à Blauzac";
+
+function cloudConfigured(){
+  return APPS_SCRIPT_URL && !APPS_SCRIPT_URL.includes("COLLEZ_ICI");
+}
+function setStatus(msg, isError){
+  const el = document.getElementById('cloud-status');
+  el.textContent = msg;
+  el.style.color = isError ? "#e8615f" : "#3ecf8e";
+}
+
+async function loadFromCloud(){
+  if(!cloudConfigured()) return null;
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 6000);
+    const res = await fetch(APPS_SCRIPT_URL + "?doc=" + DOC_ID, { signal: controller.signal });
+    clearTimeout(timeout);
+    const text = await res.text();
+    if(!text) return null;
+    const parsed = JSON.parse(text);
+    if(parsed && Array.isArray(parsed.projects)) return parsed;
+    return null;
+  }catch(e){ return null; }
+}
+async function saveToCloud(){
+  if(!cloudConfigured()){ setStatus("Non connecté à Google Sheets — enregistré uniquement dans ce navigateur.", true); return; }
+  try{
+    await fetch(APPS_SCRIPT_URL + "?doc=" + DOC_ID, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ title: currentTitle, projects: data })
+    });
+    setStatus("Enregistré sur Google Sheets ✓");
+  }catch(e){
+    setStatus("Erreur de connexion — enregistré uniquement dans ce navigateur.", true);
+  }
+}
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.projects)){
+        return { title: parsed.title || defaultTitle, projects: parsed.projects };
+      }
+    }
+  }catch(e){ /* localStorage indisponible ou données corrompues : on repart des valeurs d'origine */ }
+  return { title: defaultTitle, projects: JSON.parse(JSON.stringify(defaultData)) };
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ title: currentTitle, projects: data }));
+  }catch(e){ /* stockage indisponible (navigation privée, quota...) : les changements resteront en mémoire pour cette session seulement */ }
+  saveToCloud();
+}
+
+let currentTitle = defaultTitle;
+let data = JSON.parse(JSON.stringify(defaultData));
+
+let activeYears = null; // null = all years active
+
+function eur(n){
+  n = isNaN(n) ? 0 : n;
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:0, maximumFractionDigits:0}) + " €";
+}
+function yearOf(dateStr){
+  const parts = dateStr.split('/');
+  return parts.length === 3 ? parseInt(parts[2], 10) : null;
+}
+function allYears(){
+  const set = new Set();
+  data.forEach(p => p.factures.forEach(f => { const y = yearOf(f.date); if(y) set.add(y); }));
+  return Array.from(set).sort();
+}
+
+function renderFilters(){
+  const years = allYears();
+  if(activeYears === null) activeYears = new Set(years);
+  const container = document.getElementById('year-filters');
+  container.innerHTML = '';
+  const allChip = document.createElement('label');
+  allChip.className = 'year-chip all';
+  const allChecked = activeYears.size === years.length;
+  allChip.innerHTML = `<input type="checkbox" id="year-all" ${allChecked?'checked':''}> Toutes`;
+  container.appendChild(allChip);
+  document.getElementById('year-all').addEventListener('change', (e)=>{
+    activeYears = e.target.checked ? new Set(years) : new Set();
+    render();
+  });
+  years.forEach(y=>{
+    const chip = document.createElement('label');
+    chip.className = 'year-chip';
+    chip.innerHTML = `<input type="checkbox" data-year="${y}" ${activeYears.has(y)?'checked':''}> ${y}`;
+    container.appendChild(chip);
+  });
+  container.querySelectorAll('input[data-year]').forEach(cb=>{
+    cb.addEventListener('change', (e)=>{
+      const y = parseInt(e.target.dataset.year, 10);
+      if(e.target.checked) activeYears.add(y); else activeYears.delete(y);
+      render();
+    });
+  });
+}
+
+function render(){
+  renderFilters();
+  const container = document.getElementById('projects');
+  container.innerHTML = '';
+  let grandDevis = 0, grandFacture = 0, grandReste = 0;
+
+  data.forEach(project => {
+    let visibleTotal = 0, visiblePaid = 0, anyVisible = false;
+    const rowsHtml = project.factures.map((f,i)=>{
+      const y = yearOf(f.date);
+      const visible = !y || activeYears.has(y);
+      if(visible){ anyVisible = true; visibleTotal += Number(f.amount)||0; if(f.paid) visiblePaid += Number(f.amount)||0; }
+      return `
+        <tr class="${f.paid?'paid':''} ${visible?'':'row-hidden'}">
+          <td><input type="text" class="fac-ref" value="${f.ref}" data-project="${project.id}" data-idx="${i}" data-field="ref"></td>
+          <td class="year"><input type="text" class="fac-date" value="${f.date}" data-project="${project.id}" data-idx="${i}" data-field="date"></td>
+          <td class="num"><input type="number" class="fac-amount" value="${f.amount}" data-project="${project.id}" data-idx="${i}" data-field="amount"></td>
+          <td class="chk"><input type="checkbox" class="checkbox" ${f.paid?'checked':''} data-project="${project.id}" data-idx="${i}" data-field="paid"></td>
+          <td><button class="del-btn" data-project="${project.id}" data-idx="${i}" data-action="del">✕</button></td>
+        </tr>`;
+    }).join('');
+
+    const reste = (Number(project.devis)||0) - visiblePaid;
+    grandDevis += Number(project.devis)||0;
+    grandFacture += visibleTotal;
+    grandReste += reste;
+
+    const div = document.createElement('div');
+    div.className = 'project' + (anyVisible ? '' : ' empty-in-filter');
+    div.innerHTML = `
+      <div class="project-head">
+        <div class="name" contenteditable="true" data-field="name" data-project="${project.id}">${project.name}</div>
+      </div>
+      <div class="devis-row">Devis : <input type="number" value="${project.devis}" data-field="devis" data-project="${project.id}"> €</div>
+      ${project.note ? `<div class="note">${project.note}</div>` : ''}
+      <table>
+        <thead><tr><th>Facture</th><th class="year">Date</th><th class="num">Montant</th><th class="chk">Réglée</th><th></th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      <button class="add-btn" data-project="${project.id}" data-action="add">+ ajouter une facture</button>
+      <div class="foot-row">
+        <div class="foot-item"><div class="label">Facturé (filtré)</div><div class="value">${eur(visibleTotal)}</div></div>
+        <div class="foot-item"><div class="label">Réglé (filtré)</div><div class="value">${eur(visiblePaid)}</div></div>
+        <div class="foot-item"><div class="label">Reste à payer</div><div class="value reste ${reste<=0 ? (reste<0?'neg':'zero') : ''}">${eur(reste)}</div></div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('sum-devis').textContent = eur(grandDevis);
+  document.getElementById('sum-facture').textContent = eur(grandFacture);
+  const resteEl = document.getElementById('sum-reste');
+  resteEl.textContent = eur(grandReste);
+  resteEl.classList.toggle('zero', grandReste===0);
+  resteEl.classList.toggle('neg', grandReste<0);
+
+  attachEvents();
+}
+
+function attachEvents(){
+  document.querySelectorAll('#projects [data-field]').forEach(el=>{
+    // 'change' fires on blur / Enter, not per keystroke — avoids losing focus
+    // mid-typing when the table re-renders after every character.
+    const evt = el.isContentEditable ? 'blur' : 'change';
+    el.addEventListener(evt, onFieldChange);
+    if(!el.isContentEditable && el.type !== 'checkbox'){
+      el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') el.blur(); });
+    }
+  });
+  document.querySelectorAll('[data-action="del"]').forEach(el=> el.addEventListener('click', onDelete));
+  document.querySelectorAll('[data-action="add"]').forEach(el=> el.addEventListener('click', onAdd));
+}
+
+function getProject(id){ return data.find(p=>p.id===id); }
+
+function onFieldChange(e){
+  const el = e.target;
+  const field = el.dataset.field;
+
+  if(field === 'title'){ currentTitle = el.textContent; saveState(); return; }
+
+  const projectId = el.dataset.project;
+  const project = getProject(projectId);
+  if(!project) return;
+
+  if(field === 'devis'){ project.devis = Number(el.value); render(); saveState(); return; }
+  if(field === 'name'){ project.name = el.textContent; render(); saveState(); return; }
+
+  const idx = Number(el.dataset.idx);
+  if(field === 'ref') project.factures[idx].ref = el.value;
+  else if(field === 'date') project.factures[idx].date = el.value;
+  else if(field === 'amount') project.factures[idx].amount = Number(el.value);
+  else if(field === 'paid') project.factures[idx].paid = el.checked;
+  render();
+  saveState();
+}
+
+function onDelete(e){
+  const project = getProject(e.target.dataset.project);
+  project.factures.splice(Number(e.target.dataset.idx),1);
+  render();
+  saveState();
+}
+function onAdd(e){
+  const project = getProject(e.target.dataset.project);
+  project.factures.push({ref:"Nouvelle facture", date:"01/01/2026", amount:0, paid:false});
+  render();
+  saveState();
+}
+
+document.getElementById('title').addEventListener('blur', onFieldChange);
+
+document.getElementById('reset-btn').addEventListener('click', ()=>{
+  if(!confirm("Réinitialiser toutes les valeurs à leur état d'origine ? Vos modifications enregistrées seront perdues.")) return;
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  currentTitle = defaultTitle;
+  data = JSON.parse(JSON.stringify(defaultData));
+  document.getElementById('title').textContent = currentTitle;
+  render();
+  saveState();
+});
+
+async function init(){
+  setStatus(cloudConfigured() ? "Connexion à Google Sheets…" : "Non connecté à Google Sheets — enregistrement local uniquement dans ce navigateur.", !cloudConfigured());
+  const cloud = await loadFromCloud();
+  const state = cloud || loadLocal();
+  currentTitle = state.title || defaultTitle;
+  data = state.projects || JSON.parse(JSON.stringify(defaultData));
+  document.getElementById('title').textContent = currentTitle;
+  if(cloudConfigured()) setStatus("Connecté à Google Sheets ✓");
+  render();
+}
+init();
+</script>
+</body>
+</html>
