@@ -127,6 +127,27 @@
   .reste.neg{color:var(--red);}
   .hint{color:var(--muted); font-size:11px; margin-top:18px; line-height:1.5;}
   .row-hidden{display:none;}
+
+  /* Mise en page empilée pour petits écrans (téléphone) */
+  @media (max-width: 480px){
+    table thead{display:none;}
+    table, tbody{display:block; width:100%;}
+    tbody tr{
+      display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px;
+      border:1px solid var(--border); border-radius:10px;
+      padding:10px; margin-bottom:8px; background:var(--panel2);
+    }
+    tbody tr.row-hidden{display:none;}
+    tbody td{border-bottom:none; padding:0; width:auto;}
+    tbody td:nth-child(1){flex:1 1 100%; order:1;}
+    tbody td:nth-child(2){flex:0 1 auto; order:2;}
+    tbody td:nth-child(3){flex:1 1 auto; order:3; text-align:right;}
+    tbody td:nth-child(4){order:4;}
+    tbody td:nth-child(5){order:5; margin-left:auto;}
+    .fac-ref, .fac-date{width:100%;}
+    .fac-date{text-align:left; min-width:0;}
+    .fac-amount{width:100px;}
+  }
 </style>
 </head>
 <body>
