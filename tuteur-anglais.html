@@ -245,9 +245,126 @@
   .avatar-wrap.speaking{
     box-shadow: 0 0 0 4px rgba(224,101,75,0.3);
   }
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background: rgba(22,38,31,0.75);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:20px;
+  }
+  .modal-box{
+    background: var(--sand-card);
+    border-radius:14px;
+    padding:26px 22px;
+    max-width:420px;
+    width:100%;
+  }
+  .modal-box h2{
+    font-family:'Fraunces', serif;
+    font-size:1.15rem;
+    margin:0 0 10px;
+    color: var(--forest);
+  }
+  .modal-box p{
+    font-size:0.85rem;
+    line-height:1.6;
+    color: var(--ink);
+    margin:0 0 16px;
+  }
+  .modal-box input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px;
+    font-size:0.95rem;
+    margin-bottom:12px;
+    background:#fff;
+    color: var(--ink);
+  }
+  .modal-box button{
+    width:100%;
+    border:none;
+    background: var(--coral);
+    color:#fff;
+    padding:13px;
+    border-radius:8px;
+    font-size:0.95rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .modal-box .modal-note{
+    font-size:0.72rem;
+    color:#8a8a80;
+    margin-top:10px;
+    margin-bottom:0;
+  }
+  .change-key-link{
+    text-align:center;
+    padding:8px;
+    font-size:0.72rem;
+    color:#8a8a80;
+    text-decoration:underline;
+    cursor:pointer;
+    background: var(--sand);
+  }
+
+  .settings-panel{
+    background: var(--forest-light);
+    padding:14px 20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+  .settings-panel label{
+    color:#fff;
+    font-size:0.78rem;
+    width:100%;
+  }
+  .settings-panel input{
+    flex:1;
+    min-width:180px;
+    border:1px solid rgba(255,255,255,0.3);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:0.85rem;
+    background:rgba(255,255,255,0.95);
+    color: var(--ink);
+  }
+  .settings-panel button{
+    border:none;
+    background: var(--coral);
+    color:#fff;
+    padding:8px 14px;
+    border-radius:8px;
+    font-size:0.82rem;
+    cursor:pointer;
+  }
+  .settings-hint{
+    width:100%;
+    color:rgba(255,255,255,0.75);
+    font-size:0.72rem;
+    margin:2px 0 0;
+    line-height:1.5;
+  }
+  .settings-hint .link{ text-decoration:underline; }
 </style>
 </head>
 <body>
+
+<div class="modal-overlay" id="keyModal">
+  <div class="modal-box">
+    <h2>Bienvenue chez Ivy 👋</h2>
+    <p>Pour discuter avec elle, colle ta clé API Anthropic ci-dessous. Récupère-la sur <strong>console.anthropic.com</strong> → Settings → API Keys.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <button id="saveKeyBtn">Commencer</button>
+    <p class="modal-note">Enregistrée uniquement dans ce navigateur, sur cet appareil.</p>
+  </div>
+</div>
 
 <div class="app">
   <header>
@@ -265,7 +382,10 @@
     </div>
     <button class="speaker-toggle" id="speakerToggle">🔊 Voix : ON</button>
   </header>
+
   <div class="voice-warning" id="voiceWarning" style="display:none;"></div>
+
+  <div class="change-key-link" id="changeKeyLink">Changer la clé API</div>
 
   <div class="level-row" id="levelRow">
     <button class="level-btn active" data-level="debutant">Débutant</button>
@@ -344,7 +464,36 @@ function extractEnglishPhrases(raw){
   return matches.map(m => m[1]);
 }
 
-/* ---------- Voix ---------- */
+/* ---------- Clé API ---------- */
+const keyModal = document.getElementById('keyModal');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const saveKeyBtn = document.getElementById('saveKeyBtn');
+const changeKeyLink = document.getElementById('changeKeyLink');
+
+let apiKey = localStorage.getItem('ivy_api_key') || '';
+apiKeyInput.value = apiKey;
+keyModal.style.display = apiKey ? 'none' : 'flex';
+
+function saveKey(){
+  const val = apiKeyInput.value.trim();
+  if(val){
+    apiKey = val;
+    localStorage.setItem('ivy_api_key', apiKey);
+    keyModal.style.display = 'none';
+    inputEl.focus();
+  } else {
+    apiKeyInput.focus();
+  }
+}
+
+saveKeyBtn.addEventListener('click', saveKey);
+apiKeyInput.addEventListener('keydown', e => { if(e.key === 'Enter') saveKey(); });
+
+changeKeyLink.addEventListener('click', () => {
+  keyModal.style.display = 'flex';
+  apiKeyInput.focus();
+});
+
 const avatarWrap = document.getElementById('avatarWrap');
 const speakerToggle = document.getElementById('speakerToggle');
 const micBtn = document.getElementById('micBtn');
@@ -472,6 +621,13 @@ async function sendMessage(){
   const text = inputEl.value.trim();
   if(!text || isTyping) return;
 
+  if(!apiKey){
+    keyModal.style.display = 'flex';
+    voiceWarning.style.display = 'block';
+    voiceWarning.textContent = "Entre d'abord ta clé API ci-dessus pour pouvoir discuter avec Ivy.";
+    return;
+  }
+
   addMessage('user', text);
   history.push({role:'user', content:text});
   inputEl.value='';
@@ -488,7 +644,12 @@ async function sendMessage(){
   try{
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1000,
@@ -497,6 +658,16 @@ async function sendMessage(){
       })
     });
     const data = await response.json();
+
+    if(data.error){
+      typingDiv.remove();
+      const msg = data.error.message || "Erreur inconnue.";
+      addMessage('tutor', `Petit souci avec la clé API : ${msg}`);
+      isTyping = false;
+      sendBtn.disabled = false;
+      return;
+    }
+
     const textBlock = (data.content || []).find(b => b.type === 'text');
     const reply = textBlock ? textBlock.text : "Désolée, je n'ai pas pu répondre — réessaie.";
 
